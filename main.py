@@ -6,14 +6,36 @@ import os
 from gtts import gTTS
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, FSInputFile
+from aiogram.types import Message, FSInputFile, CallbackQuery
 from googletrans import Translator
 
 from config import TOKEN, API_KEY
+import keyboards as kb
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 translator = Translator()
+
+@dp.message(F.text == "Привет")
+async def test_button(message: Message):
+    await message.answer(f'Привет, {message.from_user.first_name}')
+
+@dp.message(F.text == "Пока")
+async def test_button(message: Message):
+    await message.answer(f'До свидания, {message.from_user.first_name}!')
+
+@dp.callback_query(F.data == 'dynamic')
+async def dynamic(callback: CallbackQuery):
+    await callback.answer("Подгружаем дополнительные опции", show_alert=True)
+    await callback.message.answer('Вот дополнительные опции!', reply_markup=await kb.test_keyboard())
+
+@dp.callback_query()
+async def handle_callbacks(callback: CallbackQuery):
+    # Ответить на callback-запрос
+    await callback.answer()
+
+    # Отправить сообщение с текстом, соответствующим callback_data
+    await callback.message.answer(callback.data)
 
 # Отправляем фото боту в Telegram, он сохраняет фото в файл img
 @dp.message(F.photo)
@@ -26,13 +48,23 @@ async def react_photo(message: Message):
 # Подключаем функцию help
 @dp.message(Command('help'))
 async def help(message: Message):
-    await message.answer('Этот бот умеет выполнять команды: \n /start - для начала работы \n /help - для помощи \n /weather - для получения прогноза погоды \n /training - для получения новой тренировки')
+    await message.answer('Этот бот умеет выполнять команды: \n /start - для начала работы \n /help - для помощи '
+    '\n /weather - для получения прогноза погоды \n /training - для получения новой тренировки \n /links - для получения новостей, музыки или видео '
+    '\n /dynamic - для вызова кнопки с дополнительными опциями')
 
 # Подключаем функцию start
 
 @dp.message(CommandStart())
 async def start(message: Message):
-    await message.answer(f'Привет, {message.from_user.first_name}') # бот будет обращаться к пользователю по имени
+    await message.answer(f'Привет, {message.from_user.first_name}', reply_markup=kb.main)
+
+@dp.message(Command('links'))
+async def links(message: Message):
+    await message.answer('Выберите, что хотите посмотреть или послушать', reply_markup=kb.inline_keyboard_test)
+
+@dp.message(Command('dynamic'))
+async def dynamic(message: Message):
+    await message.answer('Хотите знать больше?', reply_markup=kb.inline_keyboard)
 
 # Подключаем сайт OpenWeatherMap который показывает погоду на текущий день
 async def fetch_weather():
