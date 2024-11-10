@@ -29,7 +29,7 @@ def init_db():
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
     name TEXT NOT NULL, 
     age INTEGER NOT NULL, 
-    grade TEXT NOT NULL, )
+    grade TEXT NOT NULL )
     ''')
     conn.commit()
     conn.close()
@@ -64,6 +64,7 @@ async def grade(message: Message, state: FSMContext):
     INSERT INTO students (name, age, grade) VALUES (?,?,?)''', (student_data['name'], student_data['age'], student_data['grade']))
     conn.commit()
     conn.close()
+
 
 async def main():
     await dp.start_polling(bot)
